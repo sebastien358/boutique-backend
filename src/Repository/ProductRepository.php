@@ -31,7 +31,7 @@ class ProductRepository extends ServiceEntityRepository
         }
 
         if (null !== $price) {
-            $qb->andWhere('p.price <= :price')
+            $qb->andWhere('p.price >= :price')
                 ->setParameter('price', $price);
         }
 

@@ -29,23 +29,24 @@ class UserController extends AbstractController {
         $form = $this->createForm(RequestResetPasswordType::class);
         $form->submit($request->request->all());
 
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->request->get('email')]);
+        if (!$user) {
+            return new JsonResponse();
+        }
+
+        $token = uniqid();
+        $user->setToken($token);
+        $user->setRequestResetPasswordAt(new DateTime('now'));
+
+        $url = $this->getParameter('frontend_url') . '/reset-password/' . $token;
+
+        $body = $this->render('emails/reset-password.html.twig', [
+            'url' => $url
+        ])->getContent();
+
+        $this->mailerProvider->sendEmail($user->getEmail(), 'Vous avez fait une demande de réinitialisation de mot de passe', $body);
+
         if ($form->isValid()) {
-            $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->request->get('email')]);
-            if (!$user) {
-                return new JsonResponse();
-            }
-            $token = uniqid();
-            $user->setToken($token);
-            $user->setRequestResetPasswordAt(new DateTime('now'));
-
-            $url = $this->getParameter('frontend_url') . '/reset-password/' . $token;
-
-            $body = $this->render('emails/reset-password.html.twig', [
-                'url' => $url
-            ])->getContent();
-
-            $this->mailerProvider->sendEmail($user->getEmail(), 'Demande de réinitialisation de mot de passe', $body);
-
             $this->entityManager->persist($user);
             $this->entityManager->flush();
         } else {
@@ -76,6 +77,7 @@ class UserController extends AbstractController {
                 $user,
                 $form->get('password')->getData()
             ));
+
             $this->entityManager->persist($user);
             $this->entityManager->flush();
         } else {
