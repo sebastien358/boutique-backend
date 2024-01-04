@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\UserType;
+use App\Service\MailerProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,6 +16,7 @@ class RegistrationController extends AbstractController
 {
     public function __construct(
         private UserPasswordHasherInterface $userPasswordHasher,
+        private MailerProvider $mailerProvider,
         private EntityManagerInterface $entityManager
     ){
     }
@@ -37,6 +39,14 @@ class RegistrationController extends AbstractController
         } else {
             return new JsonResponse($this->getErrorMessages($form));
         }
+
+        $url = $this->getParameter('frontend_url') . '/login';
+
+        $body = $this->render('emails/registration.html.twig', [
+            'url' => $url
+        ])->getContent();
+
+        $this->mailerProvider->sendEmail($user->getEmail(), 'Demande d\'inscription', $body);
 
         return new JsonResponse();
     }

@@ -31,7 +31,7 @@ class UserController extends AbstractController {
 
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->request->get('email')]);
         if (!$user) {
-            return new JsonResponse();
+            throw new \Exception('Aucun compte ne correspond à cet identifiant');
         }
 
         $token = uniqid();
@@ -41,7 +41,8 @@ class UserController extends AbstractController {
         $url = $this->getParameter('frontend_url') . '/reset-password/' . $token;
 
         $body = $this->render('emails/reset-password.html.twig', [
-            'url' => $url
+            'url' => $url,
+            'username' => $user->getFirstName()
         ])->getContent();
 
         $this->mailerProvider->sendEmail($user->getEmail(), 'Vous avez fait une demande de réinitialisation de mot de passe', $body);

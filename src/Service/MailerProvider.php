@@ -6,6 +6,7 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 
 class MailerProvider {
+
     public function __construct(
         private string $emailFrom,
         private MailerInterface $mailer
@@ -18,7 +19,7 @@ class MailerProvider {
             ->from($this->emailFrom)
             ->to($to)
             ->subject($subject)
-            ->html($body);
+            ->htmlTemplate($body);
 
         $this->mailer->send($email);
     }
