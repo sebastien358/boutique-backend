@@ -43,7 +43,8 @@ class RegistrationController extends AbstractController
         $url = $this->getParameter('frontend_url') . '/login';
 
         $body = $this->render('emails/registration.html.twig', [
-            'url' => $url
+            'url' => $url,
+            'username' => $user->getFirstName()
         ])->getContent();
 
         $this->mailerProvider->sendEmail($user->getEmail(), 'Demande d\'inscription', $body);

@@ -38,6 +38,13 @@ class UserController extends AbstractController {
         $user->setToken($token);
         $user->setRequestResetPasswordAt(new DateTime('now'));
 
+        if ($form->isValid()) {
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+        } else {
+            return new JsonResponse($this->getErrorMessages($form));
+        }
+
         $url = $this->getParameter('frontend_url') . '/reset-password/' . $token;
 
         $body = $this->render('emails/reset-password.html.twig', [
@@ -46,13 +53,6 @@ class UserController extends AbstractController {
         ])->getContent();
 
         $this->mailerProvider->sendEmail($user->getEmail(), 'Vous avez fait une demande de réinitialisation de mot de passe', $body);
-
-        if ($form->isValid()) {
-            $this->entityManager->persist($user);
-            $this->entityManager->flush();
-        } else {
-            return new JsonResponse($this->getErrorMessages($form));
-        }
 
         return new JsonResponse();
     }

@@ -19,7 +19,7 @@ class MailerProvider {
             ->from($this->emailFrom)
             ->to($to)
             ->subject($subject)
-            ->htmlTemplate($body);
+            ->html($body);
 
         $this->mailer->send($email);
     }
