@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
+use App\Service\ProductService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -12,25 +13,9 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 final class ProductController extends AbstractController
 {
-    private function getProductsData($products, Request $request, NormalizerInterface $normalizer)
-    {
-        $dataProducts = $normalizer->normalize($products, 'json', [
-            'groups' => 'product', 'circular_reference_handler' => function ($object) {
-                return $object->getId();
-            }
-        ]);
-        $picturePath = $request->getSchemeAndHttpHost() . '/images/';
-        foreach ($dataProducts as &$product) {
-            if (isset($product['pictures'])) {
-                foreach ($product['pictures'] as &$picture) {
-                    if (isset($picture['filename']))
-                    $picture['url'] = $picturePath . $picture['filename'];
-                }
-            }
-        }
-
-        return $dataProducts;
-    }
+    public function __construct(
+        private ProductService $productService
+    ){}
     
     #[Route("/product", methods: ["GET"])]
     public function products(Request $request, ProductRepository $productRepository, NormalizerInterface $normalizer): JsonResponse
@@ -40,8 +25,7 @@ final class ProductController extends AbstractController
             if (!$products) {
                 return new JsonResponse(['message' => 'Produits introuvables'], 404);
             }
-
-            $dataProducts = $this->getProductsData($products, $request, $normalizer);
+            $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
             return new JsonResponse($dataProducts);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
@@ -53,9 +37,11 @@ final class ProductController extends AbstractController
     {
         try {
             $filterSearch = $request->query->get('search');
+            if (!$filterSearch) {
+                return new JsonResponse(['error' => 'Seach title introuvable'], 404);
+            }
             $products = $productRepository->findByFilters(['search' => $filterSearch]);
-            $dataProducts = $this->getProductsData($products, $request, $normalizer);
-
+            $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
             return new JsonResponse($dataProducts);
         } catch(\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
@@ -67,10 +53,15 @@ final class ProductController extends AbstractController
     {
         try {
             $minPrice = $request->query->get('minPrice');
+             if (!$minPrice) {
+                return new JsonResponse(['error' => 'Prix minimum introuvable'], 404);
+            }
             $maxPrice = $request->query->get('maxPrice');
+            if (!$maxPrice) {
+                return new JsonResponse(['error' => 'Prix maximum introuvable'], 404);
+            }
             $products = $productRepository->findByPrice($minPrice, $maxPrice);
-            $dataProducts = $this->getProductsData($products, $request, $normalizer);
-            
+            $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
             return new JsonResponse($dataProducts);
         } catch(\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
@@ -86,8 +77,7 @@ final class ProductController extends AbstractController
                 return new JsonResponse(['error' => 'Catégorie non trouvée'], 404);
             }
             $products = $productRepository->findByCategory($category);
-
-            $dataProducts = $this->getProductsData($products, $request, $normalizer);
+            $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
             return new JsonResponse($dataProducts, 200);
         } catch(\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
