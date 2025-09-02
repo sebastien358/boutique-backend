@@ -69,8 +69,8 @@ final class ProductController extends AbstractController
             $minPrice = $request->query->get('minPrice');
             $maxPrice = $request->query->get('maxPrice');
             $products = $productRepository->findByPrice($minPrice, $maxPrice);
-
             $dataProducts = $this->getProductsData($products, $request, $normalizer);
+            
             return new JsonResponse($dataProducts);
         } catch(\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
