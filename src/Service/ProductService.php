@@ -36,6 +36,7 @@ class ProductService
         }
       ]);
 
+      $filePath = $request->getSchemeAndHttpHost() . '/images/';
       if (isset($dataProduct['pictures'])) {
         foreach ($dataProduct['pictures'] as &$picture) {
           if (isset($picture['filename'])) {
