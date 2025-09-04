@@ -18,17 +18,17 @@ class ProductService
       ]);
 
       foreach ($dataProducts as &$product) {
-        if (isset($product['pictures'])) {
+        if (isset($product['pictures']) && is_array($product['pictures'])) {
           foreach ($product['pictures'] as &$picture) {
             if (isset($picture['filename'])) {
-              $picture['url'] = $request->getSchemeAndHttpHost() . '/images/' . $picture['filename'];
+                $picture['url'] = $request->getSchemeAndHttpHost() . '/images/' . $picture['filename'];
             }
           }
         }
       }
+
       return $dataProducts;
-    
-    } else {
+  } else {
       $dataProduct = $normalizer->normalize($products, 'json', [
         'groups' => ['product', 'pictures'],
         'circular_reference_handler' => function ($object) {
@@ -36,7 +36,7 @@ class ProductService
         }
       ]);
 
-      if (isset($dataProduct['pictures'])) {
+      if (isset($dataProduct['pictures']) && is_array($dataProduct['pictures'])) {
         foreach ($dataProduct['pictures'] as &$picture) {
           if (isset($picture['filename'])) {
             $picture['url'] = $request->getSchemeAndHttpHost() . '/images/' . $picture['filename'];

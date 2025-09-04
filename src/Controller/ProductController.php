@@ -68,7 +68,7 @@ final class ProductController extends AbstractController
         }
     }
 
-     #[Route("/products/filtered/category", methods: ["GET"])]
+    #[Route("/products/filtered/category", methods: ["GET"])]
     public function filteredCategory(Request $request, NormalizerInterface $normalizer): JsonResponse
     {
         try {

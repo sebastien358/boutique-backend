@@ -10,6 +10,7 @@ use App\Repository\ProductRepository;
 use App\Service\FileUploader;
 use App\Service\ProductService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,17 +32,41 @@ final class ProductAdminController extends AbstractController
   ) {}
 
   #[Route('/products', methods: ['GET'])]
-  public function products(Product $products, Request $request, NormalizerInterface $normalizer): JsonResponse
+  public function products(Request $request, NormalizerInterface $normalizer, LoggerInterface $logger): JsonResponse
   {
     try {
-      $products = $this->productRepository->findAll();
+      $page = $request->query->getInt('page', 1);
+      $limit = $request->query->getInt('limit', 10);
+
+      $products = $this->productRepository->findAllProducts($page, $limit);
+      $total = $this->productRepository->countAllProducts();
+
       if (!$products) {
-        return new JsonResponse(['message' => 'Liste des produits introuvables']);
+          return new JsonResponse(['message' => 'Liste des produits introuvables']);
       }
+
       $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
-      return new JsonResponse($dataProducts);
-    } catch(\Exception $e) {
+
+      return new JsonResponse([
+        'products' => $dataProducts,
+        'total' => $total,
+        'page' => $page,
+        'limit' => $limit,
+      ]);
+    } catch (\Exception $e) {
+      $logger->error($e->getMessage());
       return new JsonResponse(['error' => $e->getMessage()], 500);
+    }
+  }
+
+  #[Route('/products/count', methods: ['GET'])]
+  public function countProducts(): JsonResponse
+  {
+    try {
+        $total = $this->productRepository->countAllProducts();
+        return new JsonResponse(['total' => $total]);
+    } catch (\Exception $e) {
+        return new JsonResponse(['error' => $e->getMessage()], 500);
     }
   }
 

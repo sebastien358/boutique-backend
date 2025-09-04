@@ -44,6 +44,26 @@ class ProductRepository extends ServiceEntityRepository
         ->getQuery()
         ->getResult();
     }
+
+    public function findAllProducts(int $page, int $limit): array
+    {
+        $offset = ($page - 1) * $limit;
+
+        return $this->createQueryBuilder('p')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countAllProducts(): int
+    {
+        return $this->createQueryBuilder('p')
+            ->select('count(p)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     
     //    /**
     //     * @return Product[] Returns an array of Product objects
