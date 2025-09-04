@@ -63,7 +63,6 @@ class ProductRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
-
     
     //    /**
     //     * @return Product[] Returns an array of Product objects

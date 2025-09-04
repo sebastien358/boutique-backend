@@ -36,7 +36,7 @@ final class ProductAdminController extends AbstractController
   {
     try {
       $page = $request->query->getInt('page', 1);
-      $limit = $request->query->getInt('limit', 10);
+      $limit = $request->query->getInt('limit', 3);
 
       $products = $this->productRepository->findAllProducts($page, $limit);
       $total = $this->productRepository->countAllProducts();
