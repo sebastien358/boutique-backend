@@ -17,7 +17,7 @@ class ProductRepository extends ServiceEntityRepository
         parent::__construct($registry, Product::class);
     }
 
-    public function findByFilters(array $filterSearch) 
+     public function findBySearch(array $filterSearch) 
     {
         $qb = $this->createQueryBuilder('p');
         if (isset($filterSearch['search'])) {
@@ -26,32 +26,24 @@ class ProductRepository extends ServiceEntityRepository
         }
         return $qb->getQuery()->getResult();
     }
-    
-    public function findByPrice(int $minPrice, int $maxPrice) 
-    {
-        $qb = $this->createQueryBuilder('p');
 
-        $qb->andWhere('p.price BETWEEN :minPrice AND :maxPrice')
-        ->setParameter('minPrice', $minPrice)
-        ->setParameter('maxPrice', $maxPrice);
-
-        return $qb->getQuery()->getResult();
-    }
-
-    public function findByCategory(string $category): array
-    {
-        // dd($category); 
-        $products = $this->createQueryBuilder('p')
-            ->join('p.category', 'c')
-            ->where('c.name = :category')
-            ->setParameter('category', $category)
+    public function findByPrice(int $minPrice, int $maxPrice) {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.price BETWEEN :minPrice AND :maxPrice')
+            ->setParameter('minPrice', $minPrice)
+            ->setParameter('maxPrice', $maxPrice)
             ->getQuery()
             ->getResult();
-        // dd($products); 
-        return $products;
     }
 
-
+    public function findByCategory(string $category): array {
+        return $this->createQueryBuilder('p')
+        ->join('p.category', 'c')
+        ->where('c.name = :category')
+        ->setParameter('category', $category)
+        ->getQuery()
+        ->getResult();
+    }
     
     //    /**
     //     * @return Product[] Returns an array of Product objects

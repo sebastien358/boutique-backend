@@ -30,19 +30,33 @@ final class ProductAdminController extends AbstractController
     private FileUploader $fileUploader
   ) {}
 
-  #[Route('/product', methods: ['GET'])]
-  public function products(Request $request, NormalizerInterface $normalizer): JsonResponse
+  #[Route('/products', methods: ['GET'])]
+  public function products(Product $products, Request $request, NormalizerInterface $normalizer): JsonResponse
   {
     try {
       $products = $this->productRepository->findAll();
-      if(!$products) {
-        return new JsonResponse(['message' => 'Produits introuvables'], 404);
+      if (!$products) {
+        return new JsonResponse(['message' => 'Liste des produits introuvables']);
       }
-      
       $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
       return new JsonResponse($dataProducts);
-    } catch (\Exception $e) {
-      return new JsonResponse(['message' => false, 'error' => $e->getMessage()], 500);
+    } catch(\Exception $e) {
+      return new JsonResponse(['error' => $e->getMessage()], 500);
+    }
+  }
+
+  #[Route('/product/{id}', methods: ['GET'])]
+  public function product(int $id, Request $request, NormalizerInterface $normalizer): JsonResponse
+  {
+    try {
+      $product = $this->productRepository->find($id);
+      if (!$product) {
+        return new JsonResponse(['message' => 'Le produit est introuvable']);
+      }
+      $dataProduct = $this->productService->getProductsData($product, $request, $normalizer);
+      return new JsonResponse($dataProduct);
+    } catch(\Exception $e) {
+      return new JsonResponse(['error' => $e->getMessage()], 500);
     }
   }
 
@@ -55,9 +69,6 @@ final class ProductAdminController extends AbstractController
       $form->submit($request->request->all());
       if ($form->isValid() && $form->isSubmitted()) {
         $category = $form->get('category')->getData();
-        if (!$category) {
-          return new JsonResponse(['error' => 'La catégorie sélectionnée n\'existe pas'], 400);
-        }
         $product->setCategory($category);
         $images = $request->files->get('filename', []);
         if (!empty($images)) {
@@ -68,29 +79,14 @@ final class ProductAdminController extends AbstractController
             $picture->setProduct($product);
             $this->entityManager->persist($picture);
           }
-        }
+        } 
         $this->entityManager->persist($product);
         $this->entityManager->flush();
-        return new JsonResponse(['message' => 'Le produit a bien été ajouté']);
+        return new JsonResponse(['message' => 'Le produit a bien été ajouté'], 201);
       } else {
-        return new JsonResponse($this->getErrorMessages($form), 400);
+        return new JsonResponse([$this->getErrorMessages($form)], 500);
       }
-    } catch (\Exception $e) {
-      return new JsonResponse(['message' => 'Erreur de l\'envoi d\'un produit', 'error' => $e->getMessage()], 500);
-    }
-  }
-
-  #[Route('/product/{id}', methods: ['GET'])]
-  public function productId(int $id, NormalizerInterface $normalizer, Request $request): JsonResponse
-  {
-    try {
-      $product = $this->productRepository->find($id);
-      if (!$product) {
-        return new JsonResponse(['error' => 'Produit non trouvé'], 404);
-      }
-      $dataProduct = $this->productService->getProductsData($product, $request, $normalizer);
-      return new JsonResponse($dataProduct);
-    } catch (\Exception $e) {
+    } catch(\Exception $e) {
       return new JsonResponse(['error' => $e->getMessage()], 500);
     }
   }
@@ -100,39 +96,33 @@ final class ProductAdminController extends AbstractController
   {
     try {
       $product = $this->productRepository->find($id);
-      if (!$product) {
-        return new JsonResponse(['message' => 'Le produit n\'existe pas'], 404);
-      }
       $form = $this->createForm(ProductType::class, $product);
       $form->submit($request->request->all());
-      if ($form->isValid() && $form->isSubmitted()) {      
+      if ($form->isValid() && $form->isSubmitted()) {
         $category = $form->get('category')->getData();
-        if (!$category) {
-          return new JsonResponse(['error' => 'La catégorie sélectionnée n\'existe pas'], 400);
-        }
-        $product->setCategory($category);                        
-        $newPictures = $request->files->get('filename', []);
-        if (!empty($newPictures)) {
-          foreach ($newPictures as $picture) {
-            $newFilename = $this->fileUploader->upload($picture);
+        $product->setCategory($category);
+        $images = $request->files->get('filename', []);
+        if (!empty($images)) {
+          foreach ($images as $image) {
+            $newFilename = $this->fileUploader->upload($image);
             $picture = new Picture();
             $picture->setFilename($newFilename);
             $product->addPicture($picture);
             $this->entityManager->persist($picture);
           }
-        }                                       
+        } 
         $this->entityManager->flush();
-        return new JsonResponse(['message' => 'Le produit a bien été modifié'], 200);
+        return new JsonResponse(['message' => 'Le produit a bien été modifié'], 201);
       } else {
-        return new JsonResponse($this->getErrorMessages($form), 400);
+        return new JsonResponse([$this->getErrorMessages($form)], 500);
       }
-    } catch (\Exception $e) {
+    } catch(\Exception $e) {
       return new JsonResponse(['error' => $e->getMessage()], 500);
     }
   }
 
   #[Route('/product/{productId}/picture/{pictureId}', methods: ['DELETE'])]
-  public function deleteImage(int $productId, int $pictureId): JsonResponse
+  public function deletePicture(int $productId, int $pictureId): JsonResponse
   {
     try {
       $product = $this->productRepository->find($productId);
@@ -140,11 +130,11 @@ final class ProductAdminController extends AbstractController
         return new JsonResponse(['message' => 'Produit introuvable'], 404);
       }
       $picture = $this->pictureRepository->find($pictureId);
-       if (!$picture) {
+      if (!$picture) {
         return new JsonResponse(['message' => 'Image introuvable'], 404);
       }
       if ($picture->getProduct()->getId() !== $productId) {
-        return new JsonResponse(['message' => 'L\'image ne correspond pas au produit'], 404);
+        return new JsonResponse(['message' => 'l\'image ne correspond pas au produit'], 404);
       }
       $filePath = $this->getParameter('images_directory') . '/' . $picture->getFilename();
       if (file_exists($filePath)) {
@@ -153,14 +143,14 @@ final class ProductAdminController extends AbstractController
       $product->removePicture($picture);
       $this->entityManager->remove($picture);
       $this->entityManager->flush();
-      return new JsonResponse(['message' => 'Image supprimée avec succès'], 200);
+      return new JsonResponse(['message' => 'L\'image a bien été supprimé'], 200);
     } catch(\Exception $e) {
       return new JsonResponse(['error' => $e->getMessage()], 500);
     }
   }
 
   #[Route('/product/delete/{id}', methods: ['DELETE'])]
-  public function deleteProduct(int $id): JsonResponse
+  public function delete(int $id): JsonResponse
   {
     try {
       $product = $this->productRepository->find($id);
@@ -176,8 +166,8 @@ final class ProductAdminController extends AbstractController
       }
       $this->entityManager->remove($product);
       $this->entityManager->flush();
-      return new JsonResponse(['message' => 'Produit produit supprimé'], 200);
-    } catch (\Exception $e) {
+      return new JsonResponse(['message' => 'Le produit a bien été supprimé'], 200);
+    } catch(\Exception $e) {
       return new JsonResponse(['error' => $e->getMessage()], 500);
     }
   }

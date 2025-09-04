@@ -20,6 +20,9 @@ class CategoryAdminController extends AbstractController
     {
         try {
             $categories = $categoryRepository->findAll();
+            if (!$categories) {
+                return new JsonResponse(['message' => 'Catégories introuvables'], 404); 
+            }
             $dataCategories = $normalizer->normalize($categories, 'json', ['groups' => 'product']);
             return new JsonResponse($dataCategories);
         } catch (\Exception $e) {

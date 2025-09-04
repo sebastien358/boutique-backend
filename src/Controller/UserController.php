@@ -31,17 +31,17 @@ final class UserController extends AbstractController
         }  
     }
 
-    #[Route('/check-email', methods: ['POST'])]
-    public function emailExist(Request $request): JsonResponse 
+    #[Route('/api/emailExists', methods: ['POST'])]
+    public function emailExists(Request $request): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
-            $email = $data['email'] ?? null;
-            if (!$email) {
+            $user = $data['email'] ?? null;
+            if (!$user) {
                 return new JsonResponse(['message' => 'Email utilisateur introuvable'], 404);
             }
-            $emailExist = $this->userRepository->findOneBy(['email' => $email]);
-            if ($emailExist) {
+            $userExists = $this->userRepository->findOneBy(['email' => $user]);
+            if ($userExists) {
                 return new JsonResponse(['exists' => true]);
             } else {
                 return new JsonResponse(['exists' => false]);

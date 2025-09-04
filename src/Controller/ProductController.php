@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
 use App\Service\ProductService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,11 +17,11 @@ final class ProductController extends AbstractController
         private ProductRepository $productRepository,
     ){}
     
-    #[Route("/product", methods: ["GET"])]
-    public function products(Request $request, ProductRepository $productRepository, NormalizerInterface $normalizer): JsonResponse
+    #[Route("/products", methods: ["GET"])]
+    public function products(Request $request, NormalizerInterface $normalizer): JsonResponse
     {
         try {
-            $products = $productRepository->findAll();
+            $products = $this->productRepository->findAll();
             if (!$products) {
                 return new JsonResponse(['message' => 'Produit introuvable'], 404);
             }
@@ -33,56 +32,56 @@ final class ProductController extends AbstractController
         }
     }
 
-    #[Route('/product/search', methods: ['GET'])]
+    #[Route("/products/search", methods: ["GET"])]
     public function searchProducts(Request $request, NormalizerInterface $normalizer): JsonResponse
     {
         try {
-            $filterSearch = trim($request->query->get('search'));
+            $filterSearch = $request->query->get('search');
             if (!$filterSearch) {
-                return new JsonResponse(['error' => 'Recherche obligatoire'], 404);
+                return new JsonResponse(['message' => 'Search : Produit introuvable'], 404);
             }
-            $products = $this->productRepository->findByFilters(['search' => $filterSearch]);
+            $products = $this->productRepository->findBySearch(['search' => $filterSearch]);
             $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
             return new JsonResponse($dataProducts);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
         }
     }
 
-    #[Route('/product/filtered/price', methods: ['GET'])]
+    #[Route("/products/filtered/price", methods: ["GET"])]
     public function filteredPrice(Request $request, NormalizerInterface $normalizer): JsonResponse
     {
         try {
             $minPrice = $request->query->get('minPrice');
-             if (!$minPrice) {
-                return new JsonResponse(['error' => 'Prix minimum obligatoire'], 404);
+            $maxPrice = $request->query->get('maxPrice');   
+            if (!$minPrice) {
+                return new JsonResponse(['message' => 'Prix minimum obligatoire'], 404);
             }
-            $maxPrice = $request->query->get('maxPrice');
             if (!$maxPrice) {
-                return new JsonResponse(['error' => 'Prix maximum obligatoire'], 404);
+                return new JsonResponse(['message' => 'Prix maximum obligatoire'], 404);
             }
             $products = $this->productRepository->findByPrice($minPrice, $maxPrice);
             $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
             return new JsonResponse($dataProducts);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
-        } 
+        }
     }
 
-    #[Route('/product/filtered/category', methods: ['GET'])]
-    public function filteredCategory(Request $request, CategoryRepository $categoryRepository, NormalizerInterface $normalizer): JsonResponse
+     #[Route("/products/filtered/category", methods: ["GET"])]
+    public function filteredCategory(Request $request, NormalizerInterface $normalizer): JsonResponse
     {
         try {
-            $category = $request->query->get('category');
+            $category = $request->query->get('category'); 
             if (!$category) {
-                return new JsonResponse(['error' => 'Catégorie obligatoire'], 404);
+                return new JsonResponse(['message' => 'catégorie obligatoire'], 404);
             }
             $products = $this->productRepository->findByCategory($category);
             $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
-            return new JsonResponse($dataProducts, 200);
-        } catch(\Exception $e) {
+            return new JsonResponse($dataProducts);
+        } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
-        } 
+        }
     }
 }
 
