@@ -59,17 +59,6 @@ final class ProductAdminController extends AbstractController
     }
   }
 
-  #[Route('/products/count', methods: ['GET'])]
-  public function countProducts(): JsonResponse
-  {
-    try {
-        $total = $this->productRepository->countAllProducts();
-        return new JsonResponse(['total' => $total]);
-    } catch (\Exception $e) {
-        return new JsonResponse(['error' => $e->getMessage()], 500);
-    }
-  }
-
   #[Route('/product/{id}', methods: ['GET'])]
   public function product(int $id, Request $request, NormalizerInterface $normalizer): JsonResponse
   {
