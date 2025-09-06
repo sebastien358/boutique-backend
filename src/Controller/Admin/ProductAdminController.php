@@ -36,22 +36,13 @@ final class ProductAdminController extends AbstractController
   {
     try {
       $page = $request->query->getInt('page', 1);
-      $limit = $request->query->getInt('limit', 3);
-
+      $limit = $request->query->getInt('limit', 4);
       $products = $this->productRepository->findAllProducts($page, $limit);
       $total = $this->productRepository->countAllProducts();
-
-      if (!$products) {
-          return new JsonResponse(['message' => 'Liste des produits introuvables']);
-      }
-
       $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
-
       return new JsonResponse([
         'products' => $dataProducts,
-        'total' => $total,
-        'page' => $page,
-        'limit' => $limit,
+        'total' => $total
       ]);
     } catch (\Exception $e) {
       $logger->error($e->getMessage());

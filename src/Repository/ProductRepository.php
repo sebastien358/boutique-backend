@@ -4,7 +4,6 @@ namespace App\Repository;
 
 use App\Entity\Product;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\EntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -48,7 +47,6 @@ class ProductRepository extends ServiceEntityRepository
     public function findAllProducts(int $page, int $limit): array
     {
         $offset = ($page - 1) * $limit;
-
         return $this->createQueryBuilder('p')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
@@ -63,6 +61,16 @@ class ProductRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    public function findMoreProducts(int $offset, int $limit): array
+    {
+        return $this->createQueryBuilder('p')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
     
     //    /**
     //     * @return Product[] Returns an array of Product objects

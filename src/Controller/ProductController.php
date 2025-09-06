@@ -21,7 +21,9 @@ final class ProductController extends AbstractController
     public function products(Request $request, NormalizerInterface $normalizer): JsonResponse
     {
         try {
-            $products = $this->productRepository->findAll();
+            $offset = $request->query->getInt('offset', 0);
+            $limit = $request->query->getInt('limit', 2);
+            $products = $this->productRepository->findMoreProducts($offset, $limit);
             if (!$products) {
                 return new JsonResponse(['message' => 'Produit introuvable'], 404);
             }
