@@ -35,9 +35,9 @@ final class ProductAdminController extends AbstractController
   public function products(Request $request, NormalizerInterface $normalizer, LoggerInterface $logger): JsonResponse
   {
     try {
-      $page = $request->query->getInt('page', 1);
+      $offset = $request->query->getInt('page', 1);
       $limit = $request->query->getInt('limit', 10);
-      $products = $this->productRepository->findAllProducts($page, $limit);
+      $products = $this->productRepository->findAllProducts($offset, $limit);
       $total = $this->productRepository->countAllProducts();
       $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
       return new JsonResponse([

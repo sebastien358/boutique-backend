@@ -21,11 +21,11 @@ final class ProductController extends AbstractController
     public function products(Request $request, NormalizerInterface $normalizer): JsonResponse
     {
         try {
-            $offset = $request->query->getInt('offset', 0); 
-            $limit = $request->query->getInt('limit', 10); 
+            $offset = $request->query->getInt('offset', 0);
+            $limit = $request->query->getInt('limit', 20);
             $products = $this->productRepository->findMoreProducts($offset, $limit);
             if (!$products) {
-                return new JsonResponse(['message' => 'Produit introuvable'], 404);
+                return new JsonResponse(['message' => 'Produits introuvables'], 404);
             }
             $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
             return new JsonResponse($dataProducts);
@@ -40,7 +40,7 @@ final class ProductController extends AbstractController
         try {
             $filterSearch = $request->query->get('search');
             if (!$filterSearch) {
-                return new JsonResponse(['message' => 'Search : Produit introuvable'], 404);
+                return new JsonResponse(['message' => 'Search : Produits introuvables'], 404);
             }
             $products = $this->productRepository->findBySearch(['search' => $filterSearch]);
             $dataProducts = $this->productService->getProductsData($products, $request, $normalizer);
